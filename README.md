@@ -11,4 +11,4 @@ basic NodeMCU project using DHT22 to serial output. Will be used as basis to bui
 - breadboards
 
 # Wiring Diagram
-
+![alt text](https://github.com/jtbarrera/basic_DHT22/blob/master/simple_DHT22_bb.png?raw=true "Wiring Diagram")
