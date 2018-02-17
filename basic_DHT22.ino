@@ -8,12 +8,12 @@ void setup()
   Serial.println();
   Serial.println("Status\tHumidity (%)\tTemperature (C)\t(F)\tHeatIndex (C)\t(F)");
 
-  dht.setup(4); // data pin 2
+  dht.setup(4); // data pin 4
 }
 
 void loop()
 {
-  delay(dht.getMinimumSamplingPeriod()+8000);
+  delay(dht.getMinimumSamplingPeriod()); //for DHT22 it is 2000 ms
 
   float humidity = dht.getHumidity();
   float temperature = dht.getTemperature();
