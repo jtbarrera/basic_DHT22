@@ -1,4 +1,5 @@
 #include "DHTesp.h"
+#include <ESP8266WiFi.h>
 
 DHTesp dht;
 
