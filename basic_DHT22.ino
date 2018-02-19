@@ -1,34 +1,58 @@
-#include "DHTesp.h"
-#include <ESP8266WiFi.h>
+#include <DHTesp.h>
+#include <ArduinoJson.h>
 
+/************ Variables ******************/
 DHTesp dht;
 
+const int BUFFER_SIZE = 128;
+
+float diffTEMP = 0.5;
+float tempValue;
+float diffHUM = 1;
+float humValue;
+
+/********************************** START SETUP*****************************************/
 void setup()
 {
   Serial.begin(115200);
   Serial.println();
-  Serial.println("Status\tHumidity (%)\tTemperature (C)\t(F)\tHeatIndex (C)\t(F)");
-
   dht.setup(4); // data pin 4
 }
 
+/********************************** BUILD JSON AND SEND********************************/
+void sendState() {
+  StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+
+  root["comfort"] = dht.getStatusString();
+  root["humidity"] = humValue;
+  root["temperature"] = dht.toFahrenheit(tempValue);
+  root["heatIndex"] =   dht.computeHeatIndex(dht.toFahrenheit(tempValue), humValue, true);
+
+  char buffer[root.measureLength() + 1];
+  root.printTo(buffer, sizeof(buffer));
+  Serial.println(buffer);
+}
+
+/********************************** CHECK SENSOR DIFFERNCE ENOUGH TO SEND*************/
+bool checkBoundSensor(float newValue, float prevValue, float maxDiff) {
+  return newValue < prevValue - maxDiff || newValue > prevValue + maxDiff;
+}
+
+/********************************** START MAIN LOOP***************************************/
 void loop()
 {
   delay(dht.getMinimumSamplingPeriod()); //for DHT22 it is 2000 ms
+      
+  float newHumValue = dht.getHumidity();
+  float newTempValue = dht.getTemperature();
 
-  float humidity = dht.getHumidity();
-  float temperature = dht.getTemperature();
-
-  Serial.print(dht.getStatusString());
-  Serial.print("\t");
-  Serial.print(humidity, 1);
-  Serial.print("\t\t");
-  Serial.print(temperature, 1);
-  Serial.print("\t\t");
-  Serial.print(dht.toFahrenheit(temperature), 1);
-  Serial.print("\t\t");
-  Serial.print(dht.computeHeatIndex(temperature, humidity, false), 1);
-  Serial.print("\t\t");
-  Serial.println(dht.computeHeatIndex(dht.toFahrenheit(temperature), humidity, true), 1);
+ if (checkBoundSensor(newTempValue, tempValue, diffTEMP)) {
+   tempValue = newTempValue;
+   sendState();
+ }
+ if (checkBoundSensor(newHumValue, humValue, diffHUM)) {
+   humValue = newHumValue;
+   sendState();
+ }
 }
-
